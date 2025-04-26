@@ -1,0 +1,79 @@
+import java.util.*;
+import java.net.*;
+import java.io.*;
+
+
+public class groupchat{
+ private static final String MULTICAST_ADDRESS="230.0.0.0";
+ private static final int PORT=1234;
+
+
+  private MulticastSocket socket;
+  private String name;
+  private InetAddress group;
+  
+ public groupchat(String name) throws Exception{
+	this.name=name;
+	socket = new MulticastSocket(PORT);
+	group = InetAddress.getByName(MULTICAST_ADDRESS);
+	socket.joinGroup(group);
+}
+
+ public void sendMessage(String mess) throws IOException{
+	String fullmessage = name+" : "+mess;
+ 	byte[] message = fullmessage.getBytes();
+	socket.send(new DatagramPacket(message,message.length,group,PORT));
+}
+
+ public void receiveMessages(){
+	Thread thread = new Thread(() -> {
+
+ 	try{
+		while(true){
+		byte[] buffer = new byte[1024];
+		DatagramPacket receivep = new DatagramPacket(buffer,buffer.length);
+		socket.receive(receivep);
+
+		String received = new String(receivep.getData(),0,receivep.getLength());
+		System.out.println(received);}
+
+}catch(Exception e){
+	System.out.println("You left the chat");
+}
+
+
+});
+
+thread.start();
+}
+
+ public void leaveGroup() throws Exception{
+
+	socket.leaveGroup(group);
+	socket.close();
+}
+
+
+ public static void main(String[] args) throws Exception{
+
+	Scanner sc = new Scanner(System.in);
+	System.out.println("Enter the name:");
+	String name = sc.next();
+ 	
+	groupchat gc = new groupchat(name);
+
+	gc.receiveMessages();
+
+    System.out.println("You can send messsages now!!!:");
+ while(true){
+
+	String messagee = sc.next();
+	if(messagee.equalsIgnoreCase("exit")) break;
+
+	gc.sendMessage(messagee);
+
+	}
+	sc.close();
+
+}}
+		
